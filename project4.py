@@ -125,10 +125,7 @@ plt.ylabel('y')
 plt.show()
 
 # With normalization and nonlinearity, and best dimensions for SVD and NMF
-X = X.toarray()
-#X_normalized = X / X.max(axis=1)[:,np.newaxis]
-X_normalized = (X - X.min(axis=1)[:,np.newaxis])/ (X.max(axis=1)[:,np.newaxis] - X.min(axis=1)[:,np.newaxis])
-X_normalized = sparse.csr_matrix(X_normalized)
+X_normalized = preprocessing.normalize(X, norm='l2')
 
 svd = TruncatedSVD(n_components=3, random_state=42)
 X_reduced_svd = svd.fit_transform(X_normalized)
