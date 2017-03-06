@@ -127,7 +127,7 @@ plt.show()
 # With normalization and nonlinearity, and best dimensions for SVD and NMF
 X_normalized = preprocessing.normalize(X, norm='l2')
 
-svd = TruncatedSVD(n_components=3, random_state=42)
+svd = TruncatedSVD(n_components=2, random_state=42)
 X_reduced_svd = svd.fit_transform(X_normalized)
 X_reduced_svd[X_reduced_svd <= 0] = 1e-5
 X_norm_nonlinear_svd = np.log(X_reduced_svd)
@@ -156,3 +156,21 @@ print "Homogeneity Score: " + str(homogeneity_score(targets, predictions_norm_no
 print "Completeness Score: " + str(completeness_score(targets,predictions_norm_nonlin_nmf))
 print "Adjusted Rand Score: " + str(adjusted_rand_score(targets, predictions_norm_nonlin_nmf))
 print "Adjusted Mutual Info Score: " + str(adjusted_mutual_info_score(targets, predictions_norm_nonlin_nmf))
+
+
+# PART 4
+kmeans = KMeans(init='k-means++', n_clusters=2, max_iter=100)
+kmeans.fit(X_norm_nonlinear_svd)
+
+for i in range(X_norm_nonlinear_svd.shape[0]):
+    if (targets[i] == 0):
+        color = 'r'
+    else:
+        color = 'b'
+    plt.scatter(X_norm_nonlinear_svd[i, 0], X_norm_nonlinear_svd[i, 1], color=color)
+
+centroids = kmeans.cluster_centers_
+plt.scatter(centroids[:, 0], centroids[:, 1],
+            marker='x', s=169, linewidths=3,
+            color='g', zorder=10)
+plt.show()
