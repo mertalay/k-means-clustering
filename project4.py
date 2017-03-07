@@ -37,6 +37,20 @@ def tokenize(data):
 
 warnings.filterwarnings("ignore")
 
+def determineClasses(x):
+    if x <= 4:
+        return int(0)
+    elif x <= 8:
+        return int(1)
+    elif x <= 12:
+        return int(2)
+    elif x <= 13:
+        return int(3)
+    elif x <= 16:
+        return int(4)
+    else:
+        return int(5)
+
 # PART 1:
 # parse text data and convert to tfidf representation
 comp_categories = ['comp.graphics','comp.os.ms-windows.misc','comp.sys.ibm.pc.hardware','comp.sys.mac.hardware']
@@ -61,6 +75,7 @@ print "Homogeneity Score: " + str(homogeneity_score(targets, predictions))
 print "Completeness Score: " + str(completeness_score(targets, predictions))
 print "Adjusted Rand Score: " + str(adjusted_rand_score(targets, predictions))
 print "Adjusted Mutual Info Score: " + str(adjusted_mutual_info_score(targets, predictions))
+
 
 # PART 3:
 # s stores the largest singular values of X
@@ -175,13 +190,23 @@ plt.scatter(centroids[:, 0], centroids[:, 1],
             color='g', zorder=10)
 plt.show()
 
+
 # PART 5:
 # s stores the largest singular values of X
-u, s, vt = svds(X, k=10, which='LM', return_singular_vectors=True)
 
-dimensions = range(2,11)
+vectorizer = CountVectorizer(analyzer='word', stop_words='english', tokenizer=tokenize)
+tfidf_transformer = TfidfTransformer()
+groups = fetch_20newsgroups(subset='all', shuffle=True, random_state=42)
+counts = vectorizer.fit_transform(groups.data)
+X = tfidf_transformer.fit_transform(counts)
+
+u, s, vt = svds(X, k=20, which='LM', return_singular_vectors=True)
+
+dimensions = range(2,20)
 results_svd = []
 results_nmf = []
+
+targets = map(lambda x: int(x) , groups.target.tolist())
 
 # sweeping over the dimension parameter
 for dimension in dimensions:
@@ -220,7 +245,6 @@ for dimension in dimensions:
 print "Best Dimension for SVD: " + str(dimensions[results_svd.index(max(results_svd))])
 print "Best Dimension for NMF: " + str(dimensions[results_nmf.index(max(results_nmf))])
 
-
 # With normalization and nonlinearity, and best dimensions for SVD and NMF
 X_normalized = preprocessing.normalize(X, norm='l2')
 
@@ -256,11 +280,22 @@ print "Adjusted Mutual Info Score: " + str(adjusted_mutual_info_score(targets, p
 
 # PART 6:
 # s stores the largest singular values of X
+
+vectorizer = CountVectorizer(analyzer='word', stop_words='english', tokenizer=tokenize)
+tfidf_transformer = TfidfTransformer()
+groups = fetch_20newsgroups(subset='all',shuffle=True, random_state=42)
+counts = vectorizer.fit_transform(groups.data)
+X = tfidf_transformer.fit_transform(counts)
+
 u, s, vt = svds(X, k=10, which='LM', return_singular_vectors=True)
 
-dimensions = range(2,11)
+dimensions = range(2,20)
 results_svd = []
 results_nmf = []
+
+
+targets = map(lambda x: determineClasses(x) , groups.target.tolist())
+
 
 # sweeping over the dimension parameter
 for dimension in dimensions:
@@ -299,11 +334,10 @@ for dimension in dimensions:
 print "Best Dimension for SVD: " + str(dimensions[results_svd.index(max(results_svd))])
 print "Best Dimension for NMF: " + str(dimensions[results_nmf.index(max(results_nmf))])
 
-
 # With normalization and nonlinearity, and best dimensions for SVD and NMF
 X_normalized = preprocessing.normalize(X, norm='l2')
 
-svd = TruncatedSVD(n_components=9, random_state=42)
+svd = TruncatedSVD(n_components=15, random_state=42)
 X_reduced_svd = svd.fit_transform(X_normalized)
 X_reduced_svd[X_reduced_svd <= 0] = 1e-5
 X_norm_nonlinear_svd = np.log(X_reduced_svd)
@@ -318,7 +352,7 @@ print "Completeness Score: " + str(completeness_score(targets, predictions_norm_
 print "Adjusted Rand Score: " + str(adjusted_rand_score(targets, predictions_norm_nonlin_svd))
 print "Adjusted Mutual Info Score: " + str(adjusted_mutual_info_score(targets, predictions_norm_nonlin_svd))
 
-nmf = NMF(n_components=5)
+nmf = NMF(n_components=7)
 X_reduced_nmf = nmf.fit_transform(X_normalized)
 X_reduced_nmf[X_reduced_nmf <= 0] = 1e-5
 X_norm_nonlinear_nmf = np.log(X_reduced_nmf)
