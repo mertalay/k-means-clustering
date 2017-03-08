@@ -5,7 +5,7 @@ import operator
 import warnings
 import numpy as np
 from numpy import linalg
-from sklearn.decomposition import TruncatedSVD,NMF
+from sklearn.decomposition import TruncatedSVD,NMF,PCA
 from scipy.sparse.linalg import svds
 import matplotlib.pyplot as plt; plt.rcdefaults()
 import sklearn.linear_model as sk
@@ -78,7 +78,7 @@ print "Adjusted Mutual Info Score: " + str(adjusted_mutual_info_score(targets, p
 
 # PART 3:
 # s stores the largest singular values of X
-u, s, vt = svds(X, k=10, which='LM', return_singular_vectors=True)
+u, s, vt = svds(X, k=20, which='LM', return_singular_vectors=True)
 
 dimensions = range(2,20)
 results_svd = []
@@ -180,16 +180,25 @@ print "Adjusted Rand Score: " + str(adjusted_rand_score(targets, predictions_nor
 print "Adjusted Mutual Info Score: " + str(adjusted_mutual_info_score(targets, predictions_norm_nonlin_nmf))
 
 
-# PART 4
-kmeans = KMeans(init='k-means++', n_clusters=2, max_iter=100)
-kmeans.fit(X_norm_nonlinear_svd)
+# PART 4 (SVD with dimension reduction using k = 10 gives best results)
+X_normalized = preprocessing.normalize(X,norm='l2',axis=1)
 
-for i in range(X_norm_nonlinear_svd.shape[0]):
-    if (targets[i] == 0):
+svd = TruncatedSVD(n_components=10, random_state=42)
+X_reduced_svd = svd.fit_transform(X_normalized)
+X_reduced_svd[X_reduced_svd <= 0] = 1e-5
+X_norm_nonlinear_svd = np.log(X_reduced_svd)
+
+X_norm_nonlinear_svd_pca = PCA(n_components=2).fit_transform(X_norm_nonlinear_svd)
+
+kmeans = KMeans(n_clusters=2, max_iter=100)
+kmeans.fit(X_norm_nonlinear_svd_pca)
+
+for i in range(X_norm_nonlinear_svd_pca.shape[0]):
+    if targets[i] == 0:
         color = 'r'
     else:
         color = 'b'
-    plt.scatter(X_norm_nonlinear_svd[i, 0], X_norm_nonlinear_svd[i, 1], color=color)
+    plt.scatter(X_norm_nonlinear_svd_pca[i, 0], X_norm_nonlinear_svd_pca[i, 1], color=color)
 
 centroids = kmeans.cluster_centers_
 plt.scatter(centroids[:, 0], centroids[:, 1],
