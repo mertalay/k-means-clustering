@@ -346,10 +346,13 @@ for dimension in dimensions:
 print "Best Dimension for SVD: " + str(dimensions[results_svd.index(max(results_svd))])
 print "Best Dimension for NMF: " + str(dimensions[results_nmf.index(max(results_nmf))])
 
+maxSVD = dimensions[results_svd.index(max(results_svd))]
+maxNMF = dimensions[results_nmf.index(max(results_nmf))]
+
 # With normalization and nonlinearity, and best dimensions for SVD and NMF
 X_normalized = preprocessing.normalize(X, norm='l2')
 
-svd = TruncatedSVD(n_components=15, random_state=42)
+svd = TruncatedSVD(n_components=maxSVD, random_state=42)
 X_reduced_svd = svd.fit_transform(X_normalized)
 X_reduced_svd[X_reduced_svd <= 0] = 1e-5
 X_norm_nonlinear_svd = np.log(X_reduced_svd)
@@ -364,7 +367,7 @@ print "Completeness Score: " + str(completeness_score(targets, predictions_norm_
 print "Adjusted Rand Score: " + str(adjusted_rand_score(targets, predictions_norm_nonlin_svd))
 print "Adjusted Mutual Info Score: " + str(adjusted_mutual_info_score(targets, predictions_norm_nonlin_svd))
 
-nmf = NMF(n_components=7)
+nmf = NMF(n_components=maxNMF)
 X_reduced_nmf = nmf.fit_transform(X_normalized)
 X_reduced_nmf[X_reduced_nmf <= 0] = 1e-5
 X_norm_nonlinear_nmf = np.log(X_reduced_nmf)
