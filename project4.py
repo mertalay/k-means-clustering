@@ -80,18 +80,23 @@ print "Adjusted Mutual Info Score: " + str(adjusted_mutual_info_score(targets, p
 # s stores the largest singular values of X
 u, s, vt = svds(X, k=10, which='LM', return_singular_vectors=True)
 
-dimensions = range(2,11)
+dimensions = range(2,20)
 results_svd = []
 results_nmf = []
 
 # sweeping over the dimension parameter
 for dimension in dimensions:
-
+    X = preprocessing.normalize(X, norm='l2')
+    
     svd = TruncatedSVD(n_components=dimension, random_state=42)
     X_reduced_svd = svd.fit_transform(X)
+    X_reduced_svd[X_reduced_svd <= 0] = 1e-5
+    X_reduced_svd = np.log(X_reduced_svd)
 
     nmf = NMF(n_components=dimension)
     X_reduced_nmf = nmf.fit_transform(X)
+    X_reduced_nmf[X_reduced_nmf <= 0] = 1e-5
+    X_reduced_nmf = np.log(X_reduced_nmf)
 
     predictions_svd = KMeans(n_clusters=2, max_iter=100).fit_predict(X_reduced_svd)
     print "Part 3 ..."
@@ -139,9 +144,12 @@ plt.ylabel('y')
 plt.show()
 
 # With normalization and nonlinearity, and best dimensions for SVD and NMF
+maxSVD = dimensions[results_svd.index(max(results_svd))]
+maxNMF = dimensions[results_nmf.index(max(results_nmf))]
+
 X_normalized = preprocessing.normalize(X, norm='l2')
 
-svd = TruncatedSVD(n_components=2, random_state=42)
+svd = TruncatedSVD(n_components=maxSVD, random_state=42)
 X_reduced_svd = svd.fit_transform(X_normalized)
 X_reduced_svd[X_reduced_svd <= 0] = 1e-5
 X_norm_nonlinear_svd = np.log(X_reduced_svd)
@@ -156,7 +164,7 @@ print "Completeness Score: " + str(completeness_score(targets, predictions_norm_
 print "Adjusted Rand Score: " + str(adjusted_rand_score(targets, predictions_norm_nonlin_svd))
 print "Adjusted Mutual Info Score: " + str(adjusted_mutual_info_score(targets, predictions_norm_nonlin_svd))
 
-nmf = NMF(n_components=2)
+nmf = NMF(n_components=maxNMF)
 X_reduced_nmf = nmf.fit_transform(X_normalized)
 X_reduced_nmf[X_reduced_nmf <= 0] = 1e-5
 X_norm_nonlinear_nmf = np.log(X_reduced_nmf)
@@ -188,7 +196,6 @@ plt.scatter(centroids[:, 0], centroids[:, 1],
             marker='x', s=169, linewidths=3,
             color='g', zorder=10)
 plt.show()
-
 
 # PART 5:
 # s stores the largest singular values of X
